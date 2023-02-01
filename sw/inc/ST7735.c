@@ -246,6 +246,18 @@ uint16_t StTextColor = ST7735_YELLOW;
 #define ST7735_GMCTRP1 0xE0
 #define ST7735_GMCTRN1 0xE1
 
+
+//global variables
+int32_t min_x;
+int32_t max_x;
+int32_t min_y;
+int32_t max_y;
+
+//Function definitions
+//Helper Function takes a single digit int and converts it to it's corrosponding character
+
+char digitToChar(int);
+
 // standard ascii 5x7 font
 // originally from glcdfont.c from Adafruit project
 static const uint8_t Font[] = {
@@ -1896,6 +1908,38 @@ void ST7735_sDecOut2(int32_t n){
  */
 void ST7735_sDecOut3(int32_t n) {
     /* TODO (ECE445L Lab 1): complete this. */
+		if(n<-99999){
+		ST7735_OutString("-**.***");
+		return;
+	}
+	else if(n>99999){
+		ST7735_OutString("**.***");
+		return;
+	}
+	else{
+		uint32_t tens, ones, hundredth, tenth, oneth =0;
+		if(n<0){			//If the number is negative print a negative sign to screen
+			ST7735_OutChar('-');
+			n = -1*n;
+		}
+		
+		tens = n/10000;
+		ones = (n-10000*tens)/1000;
+		hundredth = (n-(10000*tens)-(ones*1000))/100;
+		tenth = (n-(10000*tens)-(ones*1000)-(hundredth*100))/10;
+		oneth = n-(10000*tens)-(ones*1000)-(hundredth*100)-(tenth*10);
+		
+		//Start printing individual digits to screen
+		if(tens){
+			ST7735_OutChar(digitToChar(tens));
+		}
+		ST7735_OutChar(digitToChar(ones));
+		ST7735_OutChar('.');
+		ST7735_OutChar(digitToChar(hundredth));
+		ST7735_OutChar(digitToChar(tenth));
+		ST7735_OutChar(digitToChar(oneth));
+		
+	}
 }
 
 /**
@@ -1925,6 +1969,38 @@ void ST7735_sDecOut3(int32_t n) {
  */
 void ST7735_uBinOut5(uint32_t n) {
     /* TODO (ECE445L Lab 1): complete this. */
+		 int integerPart = n/32;
+  
+  if(n > 31999){ // if input is greater than 63999    
+    ST7735_OutString(" ***.**");// output "***.**"
+    return;
+  }else{
+      if(n < 100){                 // if the number is less than 1,
+        ST7735_OutString("   0."); // output leading spaces then 0
+      }else if(n< 1000){          // if number is between 1 and 10,
+        ST7735_OutString("   ");   // output leading spaces and then number
+        ST7735_OutUDec(integerPart);
+        ST7735_OutString(".");
+      }else if(n < 10000){         // if number is between 10 and 100,
+        ST7735_OutString("  ");    // output leading spaces and then number
+        ST7735_OutUDec(integerPart);
+        ST7735_OutString(".");
+      }
+      else{                        // if number is between 100 and 1000,
+        ST7735_OutString(" ");     // output leading space and then number
+        ST7735_OutUDec(integerPart);
+        ST7735_OutString(".");
+      }
+			
+			int decimalPart = ((n*100 +16)/32) - integerPart*100;
+      if(decimalPart < 10){            // if remaining number is less than 0.1,
+        ST7735_OutString("0");     // output 0 and then remaining digit
+        ST7735_OutUDec(decimalPart);
+      }else{                       // if remaining number is between 0.1 and 1,
+        ST7735_OutUDec(decimalPart);     // then print out remaining two digits
+      }
+    return;    
+  }
 }
 
 /**************ST7735_uBinOut6***************
@@ -1996,6 +2072,22 @@ void ST7735_uBinOut6(uint32_t n){
  */
 void ST7735_XYplotInit(char *title, int32_t minX, int32_t maxX, int32_t minY, int32_t maxY){
     /* TODO (ECE445L Lab 1): complete this. */
+	
+	
+		ST7735_FillScreen(ST7735_Color565(228,228,228));
+		ST7735_FillRect(0, 0, 127, 32, ST7735_BLACK);
+	
+		
+		ST7735_SetCursor(0,1);
+		ST7735_OutString(title);
+	
+		
+	
+		min_x = minX;
+		max_x = maxX;
+		min_y = minY;
+		max_y = maxY;
+	
 }
 
 /**
@@ -2010,6 +2102,20 @@ void ST7735_XYplotInit(char *title, int32_t minX, int32_t maxX, int32_t minY, in
  */
 void ST7735_XYplot(uint32_t num, int32_t bufX[], int32_t bufY[], uint16_t color) {
     /* TODO (ECE445L Lab 1): complete this. */
+		for(uint32_t count =0; count < num; count++){
+			
+			// i goes from 0 to 127
+			// x=MaxX maps to i=0
+			// x=MaxX maps to i=127	
+	
+			int i = (127*(bufX[count] - min_x))/(max_x-min_x);  
+  
+			// y=MaxY maps to j=32
+			// y=MinY maps to j=159
+  
+			int j = 32+(127*(max_y-bufY[count]))/(max_y-min_y);
+			ST7735_DrawPixel(i,   j,   color);
+	}
 }
 
 // plotLine function that is used when dx is greater than dy
@@ -2127,4 +2233,31 @@ void ST7735_SetX(int32_t newX){
   }else{
     X = newX;
   }
+}
+
+//Helper Function takes a single digit int and converts it to it's corrosponding character
+
+char digitToChar(int a){
+	char c = '0';
+	if(a==1)
+		c = '1';
+	if(a==2)
+		c = '2';
+	if(a==3)
+		c = '3';
+	if(a==4)
+		c = '4';
+	if(a==5)
+		c = '5';
+	if(a==6)
+		c = '6';
+	if(a==7)
+		c = '7';
+	if(a==8)
+		c = '8';
+	if(a==9)
+		c = '9';
+	
+	return c;
+		
 }

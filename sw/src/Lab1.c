@@ -119,7 +119,7 @@ const int32_t StarYbuf[50] = { 190, 172, 154, 136, 118, 100, 81, 63, 45, 27, 9, 
 
 
 /** Main functions. */
-int main(void) {
+int mainNotInUse(void) {
     uint32_t i;
     PLL_Init(Bus80MHz);
     PortF_Init();
@@ -192,3 +192,23 @@ void Pause(void) {
         DelayWait10ms(10);
     }
 }
+/////Test Main
+uint32_t startTime,stopTime; // in 12.5ns
+uint32_t ElapsedTime,ElapsedTime2; // in usec
+int main(void){
+  PLL_Init(Bus80MHz);  // Bus clock is 80 MHz 
+  ST7735_InitR(INITR_REDTAB); 
+  NVIC_ST_RELOAD_R = 0x00FFFFFF; // maximum reload value
+  NVIC_ST_CURRENT_R = 0;    // any write to current clears it
+  NVIC_ST_CTRL_R = 5;
+  startTime = NVIC_ST_CURRENT_R;
+  ST7735_uBinOut5(16383);  // output 511.97
+  stopTime = NVIC_ST_CURRENT_R;
+  ElapsedTime = ((startTime-stopTime)&0x0FFFFFF)/80; // usec
+  startTime = NVIC_ST_CURRENT_R;
+  ST7735_OutString("511.97");  // output 511.97
+  stopTime = NVIC_ST_CURRENT_R;
+  ElapsedTime2 = ((startTime-stopTime)&0x0FFFFFF)/80; // usec  
+  while(1){}  
+}  
+
